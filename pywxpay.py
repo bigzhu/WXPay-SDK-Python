@@ -79,7 +79,7 @@ class WXPayUtil(object):
     def dict2xml(data_dict):
         """ dict to xml"""
         return as_text( xmltodict.unparse({'xml': data_dict}, pretty=True) )
-    
+
     @staticmethod
     def xml2dict(xml_str):
         """ xml to dict """
@@ -131,7 +131,7 @@ class WXPayUtil(object):
         sign = WXPayUtil.generate_signature(data_dict, key_str)
         new_data_dict[_SIGN] = sign
         return WXPayUtil.dict2xml( new_data_dict )
-    
+
     @staticmethod
     def generate_nonce_str():
         """ 随机字符串 """
@@ -149,17 +149,18 @@ class SignInvalidException(Exception):
 
 class WXPay(object):
 
-    def __init__(self, app_id, mch_id, key, cert_pem_path, key_pem_path, timeout=_DEFAULT_TIMEOUT):
+    def __init__(self, app_id, mch_id, sub_mch_id, key, cert_pem_path, key_pem_path, timeout=_DEFAULT_TIMEOUT):
         """
         timeout: 网络请求超时时间，单位毫秒
         """
         self.app_id = app_id
         self.mch_id = mch_id
+        self.sub_mch_id = sub_mch_id
         self.key = key
         self.cert_pem_path = cert_pem_path
         self.key_pem_path = key_pem_path
         self.timeout = timeout
-    
+
     def _process_response_xml(self, resp_xml):
         """
         处理微信支付返回的 xml 格式数据
@@ -183,23 +184,23 @@ class WXPay(object):
             raise Exception('return_code value {} is invalid of response data: {}'.format(return_code, resp_xml))
 
     def micropay(self, data_dict, timeout=None):
-        """ 
+        """
         作用：提交刷卡支付
         场景：刷卡支付
         """
         _timeout = self.timeout if timeout is None else timeout
         resp_xml = self.request_without_cert(_MICROPAY_URL, data_dict, _timeout)
         return self._process_response_xml(resp_xml)
-    
+
     def unifiedorder(self, data_dict, timeout=None):
-        """ 
+        """
         作用：统一下单
         场景：公共号支付、扫码支付、APP支付
         """
         _timeout = self.timeout if timeout is None else timeout
         resp_xml = self.request_without_cert(_UNIFIEDORDER_URL, data_dict, _timeout)
         return self._process_response_xml(resp_xml)
-    
+
     def orderquery(self, data_dict, timeout=None):
         """
         作用：查询订单
@@ -293,12 +294,13 @@ class WXPay(object):
         :return:
         """
         return WXPayUtil.is_signature_valid(xml_data, self.key)
-    
+
     def make_request_body(self, data_dict):
         """ 生成请求体 """
         new_data_dict = copy.deepcopy(data_dict)
         new_data_dict['appid'] = self.app_id
         new_data_dict['mch_id'] = self.mch_id
+        new_data_dict['sub_mch_id'] = self.sub_mch_id
         new_data_dict['nonce_str'] = WXPayUtil.generate_nonce_str()
         return WXPayUtil.generate_signed_xml(new_data_dict, self.key)
 
@@ -307,9 +309,9 @@ class WXPay(object):
         req_body = self.make_request_body(data_dict).encode('utf-8')
         req_headers = {'Content-Type': 'application/xml'}
         _timeout = self.timeout if timeout is None else timeout
-        resp = requests.post(url_str, 
-                            data=req_body, 
-                            headers=req_headers, 
+        resp = requests.post(url_str,
+                            data=req_body,
+                            headers=req_headers,
                             timeout=_timeout/1000.0,
                             cert=(self.cert_pem_path, self.key_pem_path),
                             verify=True)

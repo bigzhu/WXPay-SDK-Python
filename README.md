@@ -1,6 +1,5 @@
 微信支付 Python SDK
 -------
-
 对[微信支付开发者文档](https://pay.weixin.qq.com/wiki/doc/api/index.html)中给出的API进行了封装。WXPay类下提供了对应的方法：
 
 |方法名 | 说明 |
@@ -23,6 +22,9 @@
 
 对于downloadbill，无论是否成功都返回dict类型对象，且都含有`return_code`和`return_msg`。
 若成功，其中`return_code`为`SUCCESS`，另外`data`对应对账单数据。
+
+## change by bigzhu
+支持 sub_mch_id
 
 ## 兼容性
 在Python2.7.6和Python 3.4.3中测试通过。
